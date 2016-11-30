@@ -22,11 +22,13 @@ public class ImgurAuthorization {
 
     private static ImgurAuthorization INSTANCE;
 
-    private ImgurAuthorization() {}
+    private ImgurAuthorization() {
+    }
 
     public static ImgurAuthorization getInstance() {
-        if (INSTANCE == null)
+        if (INSTANCE == null) {
             INSTANCE = new ImgurAuthorization();
+        }
         return INSTANCE;
     }
 
@@ -41,19 +43,18 @@ public class ImgurAuthorization {
 
         if (!TextUtils.isEmpty(accessToken)) {
             conn.setRequestProperty("Authorization", "Bearer " + accessToken);
-        }
-        else {
+        } else {
             conn.setRequestProperty("Authorization", "Client-ID " + Const.CLIENT_ID);
         }
     }
 
     public void saveRefreshToken(Context context, String refreshToken, String accessToken, long expiresIn) {
         context.getSharedPreferences(Const.SHARED_PREFERENCES_NAME, 0)
-                .edit()
-                .putString("access_token", accessToken)
-                .putString("refresh_token", refreshToken)
-                .putLong("expires_in", expiresIn)
-                .commit();
+            .edit()
+            .putString("access_token", accessToken)
+            .putString("refresh_token", refreshToken)
+            .putLong("expires_in", expiresIn)
+            .apply();
     }
 
     public String requestNewAccessToken(Context context) {
@@ -66,7 +67,7 @@ public class ImgurAuthorization {
         }
 
         // clear previous access token
-        prefs.edit().remove("access_token").commit();
+        prefs.edit().remove("access_token").apply();
 
         HttpURLConnection conn = null;
         try {
@@ -91,8 +92,7 @@ public class ImgurAuthorization {
                 InputStream in = conn.getInputStream();
                 handleAccessTokenResponse(context, in);
                 in.close();
-            }
-            else {
+            } else {
                 InputStream errorStream = conn.getErrorStream();
                 StringBuilder sb = new StringBuilder();
                 Scanner scanner = new Scanner(errorStream);
@@ -111,7 +111,8 @@ public class ImgurAuthorization {
         } finally {
             try {
                 conn.disconnect();
-            } catch (Exception ignore) {}
+            } catch (Exception ignore) {
+            }
         }
     }
 
@@ -123,26 +124,26 @@ public class ImgurAuthorization {
         }
 
         JSONObject root = new JSONObject(sb.toString());
-        String accessToken      = root.getString("access_token");
-        String refreshToken     = root.getString("refresh_token");
-        long expiresIn          = root.getLong("expires_in");
-        String tokenType        = root.getString("token_type");
-        String accountUsername  = root.getString("account_username");
+        String accessToken = root.getString("access_token");
+        String refreshToken = root.getString("refresh_token");
+        long expiresIn = root.getLong("expires_in");
+        String tokenType = root.getString("token_type");
+        String accountUsername = root.getString("account_username");
 
         context.getSharedPreferences(Const.SHARED_PREFERENCES_NAME, 0)
-                .edit()
-                .putString("access_token", accessToken)
-                .putString("refresh_token", refreshToken)
-                .putLong("expires_in", expiresIn)
-                .putString("token_type", tokenType)
-                .putString("account_username", accountUsername)
-                .commit();
+            .edit()
+            .putString("access_token", accessToken)
+            .putString("refresh_token", refreshToken)
+            .putLong("expires_in", expiresIn)
+            .putString("token_type", tokenType)
+            .putString("account_username", accountUsername)
+            .apply();
     }
 
     public void logout(Context context) {
         context.getSharedPreferences(Const.SHARED_PREFERENCES_NAME, 0)
-                .edit()
-                .clear()
-                .commit();
+            .edit()
+            .clear()
+            .apply();
     }
 }

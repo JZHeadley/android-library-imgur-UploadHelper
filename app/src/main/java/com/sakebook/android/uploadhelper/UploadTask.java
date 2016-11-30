@@ -1,15 +1,5 @@
 package com.sakebook.android.uploadhelper;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Scanner;
-
-import org.json.JSONObject;
-
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -21,7 +11,17 @@ import android.os.HandlerThread;
 import android.text.TextUtils;
 import android.util.Log;
 
-public class UploadTask extends AsyncTask<Uri, Integer, String> implements OnCancelListener{
+import org.json.JSONObject;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+
+public class UploadTask extends AsyncTask<Uri, Integer, String> implements OnCancelListener {
 
 	private Context mContext;
 	private UploadTaskCallback mCallback;
@@ -29,10 +29,11 @@ public class UploadTask extends AsyncTask<Uri, Integer, String> implements OnCan
 	private boolean isShowDialog = false;
 	private String mTitle = "Please wait";
 	private String mMessage = "Uploading data...";
-	
+
 	/**
 	 * default constract
-	 * @param context Context;
+	 *
+	 * @param context  Context;
 	 * @param callback Context; you need implement UploadTaskCallback;
 	 */
 	public UploadTask(Context context, UploadTaskCallback callback) {
@@ -42,16 +43,28 @@ public class UploadTask extends AsyncTask<Uri, Integer, String> implements OnCan
 
 	/**
 	 * custom constract. setting dialog text;
-	 * @param context Context;
+	 *
+	 * @param context  Context;
 	 * @param callback Context; you need implement UploadTaskCallback;
-	 * @param title String; dialog title text;
-	 * @param message String; dialog message text;
+	 * @param title    String; dialog title text;
+	 * @param message  String; dialog message text;
 	 */
 	public UploadTask(Context context, UploadTaskCallback callback, String title, String message) {
 		this.mContext = context;
 		this.mCallback = callback;
 		this.mTitle = title;
 		this.mMessage = message;
+	}
+
+	private static int copy(InputStream input, OutputStream output) throws IOException {
+		byte[] buffer = new byte[8192];
+		int count = 0;
+		int n = 0;
+		while (-1 != (n = input.read(buffer))) {
+			output.write(buffer, 0, n);
+			count += n;
+		}
+		return count;
 	}
 
 	@Override
@@ -65,16 +78,16 @@ public class UploadTask extends AsyncTask<Uri, Integer, String> implements OnCan
 	@Override
 	protected void onCancelled(String rerult) {
 		super.onCancelled(rerult);
-		Log.i(Const.TAG, "task onCancelled result:"+rerult);
+		Log.i(Const.TAG, "task onCancelled result:" + rerult);
 		closeDialog();
-		mCallback.cancel("onCancelled: "+rerult);
+		mCallback.cancel("onCancelled: " + rerult);
 	}
 
 	@Override
 	public void onCancel(DialogInterface dialog) {
 		Log.i(Const.TAG, "task dialog onCancel");
 	}
-	
+
 	@Override
 	protected void onPostExecute(String rerult) {
 		super.onPostExecute(rerult);
@@ -82,7 +95,7 @@ public class UploadTask extends AsyncTask<Uri, Integer, String> implements OnCan
 		closeDialog();
 		if (!TextUtils.isEmpty(rerult)) {
 			mCallback.success(rerult);
-		}else {
+		} else {
 			mCallback.fail(rerult);
 		}
 	}
@@ -93,15 +106,15 @@ public class UploadTask extends AsyncTask<Uri, Integer, String> implements OnCan
 		Log.i(Const.TAG, "task onPreExecute");
 		if (dialog == null) {
 			dialog = new ProgressDialog(mContext);
-		    dialog.setTitle(mTitle);
-		    dialog.setMessage(mMessage);
-		    dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		    dialog.setCancelable(false);
-		    dialog.setOnCancelListener(this);
-		    dialog.setMax(100);
-		    dialog.setProgress(0);
-		    dialog.show();
-		    isShowDialog = true;
+			dialog.setTitle(mTitle);
+			dialog.setMessage(mMessage);
+			dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			dialog.setCancelable(false);
+			dialog.setOnCancelListener(this);
+			dialog.setMax(100);
+			dialog.setProgress(0);
+			dialog.show();
+			isShowDialog = true;
 		}
 	}
 
@@ -111,30 +124,30 @@ public class UploadTask extends AsyncTask<Uri, Integer, String> implements OnCan
 		Log.i(Const.TAG, "task onProgressUpdate");
 		dialog.setProgress(values[0]);
 	}
-	
+
 	@Override
 	protected String doInBackground(Uri... params) {
 		Log.i(Const.TAG, "task doInBackground");
-		
+
 		final HandlerThread ht = new HandlerThread("");
-        ht.start();
-        Handler h = new Handler(ht.getLooper());
-        h.post(new Runnable() {
-            @Override
-            public void run() {
-    			for(int i=0; i<5; i++){
-					if(isCancelled()){
+		ht.start();
+		Handler h = new Handler(ht.getLooper());
+		h.post(new Runnable() {
+			@Override
+			public void run() {
+				for (int i = 0; i < 5; i++) {
+					if (isCancelled()) {
 						break;
-			        }
-			        try {
+					}
+					try {
 						Thread.sleep(3000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-			        publishProgress((i+1) * 20);
-    			}
-            }
-        });
+					publishProgress((i + 1) * 20);
+				}
+			}
+		});
 
 		InputStream imageIn;
 		try {
@@ -144,80 +157,71 @@ public class UploadTask extends AsyncTask<Uri, Integer, String> implements OnCan
 			return null;
 		}
 
-        HttpURLConnection conn = null;
-        InputStream responseIn = null;
+		HttpURLConnection conn = null;
+		InputStream responseIn = null;
 
 		try {
-            conn = (HttpURLConnection) new URL(Const.UPLOAD_URL).openConnection();
-            conn.setDoOutput(true);
+			conn = (HttpURLConnection) new URL(Const.UPLOAD_URL).openConnection();
+			conn.setDoOutput(true);
 
-            ImgurAuthorization.getInstance().addToHttpURLConnection(mContext, conn);
+			ImgurAuthorization.getInstance().addToHttpURLConnection(mContext, conn);
 
-            OutputStream out = conn.getOutputStream();
-            copy(imageIn, out);
-            out.flush();
-            out.close();
+			OutputStream out = conn.getOutputStream();
+			copy(imageIn, out);
+			out.flush();
+			out.close();
 
-            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                responseIn = conn.getInputStream();
-            	ht.quit();
-                return onInput(responseIn);
-            }
-            else {
-                responseIn = conn.getErrorStream();
-                StringBuilder sb = new StringBuilder();
-                Scanner scanner = new Scanner(responseIn);
-                while (scanner.hasNext()) {
-                    sb.append(scanner.next());
-                }
-                Log.i(Const.TAG, "error response: " + sb.toString());
-                return null;
-            }
+			if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+				responseIn = conn.getInputStream();
+				ht.quit();
+				return onInput(responseIn);
+			} else {
+				responseIn = conn.getErrorStream();
+				StringBuilder sb = new StringBuilder();
+				Scanner scanner = new Scanner(responseIn);
+				while (scanner.hasNext()) {
+					sb.append(scanner.next());
+				}
+				Log.i(Const.TAG, "error response: " + sb.toString());
+				return null;
+			}
 		} catch (Exception ex) {
 			Log.e(Const.TAG, "Error during POST", ex);
 			return null;
 		} finally {
-            try {
+			try {
 //            	publishProgress(100);
-                responseIn.close();
-            } catch (Exception ignore) {}
-            try {
-                conn.disconnect();
-            } catch (Exception ignore) {}
+				responseIn.close();
+			} catch (Exception ignore) {
+			}
+			try {
+				conn.disconnect();
+			} catch (Exception ignore) {
+			}
 			try {
 				imageIn.close();
-			} catch (Exception ignore) {}
+			} catch (Exception ignore) {
+			}
 		}
 	}
 
-    private static int copy(InputStream input, OutputStream output) throws IOException {
-        byte[] buffer = new byte[8192];
-        int count = 0;
-        int n = 0;
-        while (-1 != (n = input.read(buffer))) {
-            output.write(buffer, 0, n);
-            count += n;
-        }
-        return count;
-    }
-	
 	protected String onInput(InputStream in) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        Scanner scanner = new Scanner(in);
-        while (scanner.hasNext()) {
-            sb.append(scanner.next());
-        }
+		StringBuilder sb = new StringBuilder();
+		Scanner scanner = new Scanner(in);
+		while (scanner.hasNext()) {
+			sb.append(scanner.next());
+		}
 
-        JSONObject root = new JSONObject(sb.toString());
-        String id = root.getJSONObject("data").getString("id");
-        @SuppressWarnings("unused")
+		JSONObject root = new JSONObject(sb.toString());
+		String id = root.getJSONObject("data").getString("id");
+		@SuppressWarnings("unused")
 		String deletehash = root.getJSONObject("data").getString("deletehash");
 
 //		Log.i(Const.TAG, "new imgur url: http://imgur.com/" + id + " (delete hash: " + deletehash + ")");
 		return id;
 	}
 
-	private void closeDialog(){
+	private void closeDialog() {
 		if (isShowDialog) {
 			try {
 				dialog.dismiss();
