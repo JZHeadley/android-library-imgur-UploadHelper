@@ -1,4 +1,4 @@
-This project is a fork of 
+This project is a fork of sakebook's android-library-imgur-UploadHelper and instructions on its usage can be found [here](https://github.com/sakebook/android-library-imgur-UploadHelper).
 # Build
 
 To build the app run ./gradlew build within the directory.
